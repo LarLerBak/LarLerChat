@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LarLerCaht | Open Source Messaging</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="sidebar">
+            <div class="logo">LLC</div>
+            <div class="channels">
+                <button class="active"># général</button>
+                <button># développement</button>
+                <button># design</button>
+            </div>
+        </nav>
+
+        <main class="chat-area">
+            <header>
+                <h2># général</h2>
+            </header>
+            <div id="messages-container">
+                <div class="message">
+                    <span class="user">Système:</span>
+                    <p>Bienvenue sur LarLerCaht !</p>
+                </div>
+            </div>
+            <form id="chat-form">
+                <input type="text" id="msg-input" placeholder="Envoyer un message..." autocomplete="off">
+                <button type="submit">Envoyer</button>
+            </form>
+        </main>
+
+        <aside class="friends-list">
+            <h3>En ligne — 1</h3>
+            <div class="friend">Vous (Admin)</div>
+        </aside>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
