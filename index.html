@@ -3,39 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LerLarChat | Immersive</title>
+    <title>LerLarChat | Social Immersive</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="mobile-frame">
+        <div id="stories-tray">
+            <div class="story-add" title="Poster une story">+</div>
+            <div id="stories-container"></div>
+        </div>
+
         <header class="hud-top">
             <div class="user-profile">
                 <div class="avatar"></div>
-                <span id="username-display">Moi</span>
+                <span id="username-display">Chargement...</span>
             </div>
-            <div class="streak-badge">
-                <span class="fire-icon">🔥</span>
-                <span id="streak-count">12</span>
-            </div>
+            <div class="streak-badge">🔥 <span id="streak-count">0</span></div>
         </header>
 
-        <main id="immersive-chat">
-            <div class="chat-feed" id="feed">
-                <div class="msg-pill received">
-                    <span class="sender">LerLarBot</span>
-                    <p>Swipe pour voir la magie ! ✨</p>
-                </div>
+        <main id="main-view">
+            <div id="feed" class="view-section active"></div>
+            
+            <div id="contacts-view" class="view-section hidden">
+                <h2 class="view-title">Communauté</h2>
+                <div id="users-list"></div>
             </div>
         </main>
 
-        <footer class="hud-bottom">
+        <nav class="nav-bar">
+            <button class="nav-item active" onclick="switchTab('chat', this)">💬</button>
+            <button class="nav-item" onclick="switchTab('contacts', this)">👥</button>
+        </nav>
+
+        <footer class="hud-bottom" id="chat-controls">
             <div class="composer-pill">
-                <button id="camera-btn">📸</button>
-                <input type="text" id="msg-input" placeholder="Envoyer un chat..." autocomplete="off">
+                <input type="text" id="msg-input" placeholder="Envoyer un message..." autocomplete="off">
                 <button id="send-trigger">🚀</button>
             </div>
         </footer>
     </div>
-    <script type="module" src="app.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
+            serverTimestamp, doc, setDoc, increment, where 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIGURATION : Remplace par tes clés Firebase ici
+        const firebaseConfig = {
+            apiKey: "TON_API_KEY",
+            authDomain: "lerlarchat.firebaseapp.com",
+            projectId: "lerlarchat",
+            storageBucket: "lerlarchat.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- AUTH & PROFIL ---
+        let myName = localStorage.getItem('lerlarchat-user');
+        if (!myName) {
+            myName = prompt("Bienvenue sur LerLarChat ! Ton pseudo :") || "Anonyme" + Math.floor(Math.random()*100);
+            localStorage.setItem('lerlarchat-user', myName);
+        }
+        document.getElementById('username-display').innerText = myName;
+
+        // Mise à jour présence
+        const myUserRef = doc(db, "users", myName);
+        setDoc(myUserRef, { name: myName, online: true, lastSeen: serverTimestamp() }, { merge: true });
+
+        // --- TEMPS RÉEL : MESSAGES ---
+        const feed = document.getElementById('feed');
+        const qMsg = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+        onSnapshot(qMsg, (snap) => {
+            feed.innerHTML = "";
+            snap.forEach(d => {
+                const m = d.data();
+                const isMe = m.user === myName;
+                const div = document.createElement('div');
+                div.className = `msg-pill ${isMe ? 'sent' : 'received'}`;
+                div.innerHTML = `${isMe ? '' : '<span class="sender">'+m.user+'</span>'}<p>${m.text}</p>`;
+                feed.appendChild(div);
+            });
+            feed.scrollTop = feed.scrollHeight;
+        });
+
+        // --- TEMPS RÉEL : FLAMMES ---
+        onSnapshot(myUserRef, (doc) => {
+            if(doc.exists()) document.getElementById('streak-count').innerText = doc.data().streak || 0;
+        });
+
+        // --- TEMPS RÉEL : STORIES (24H) ---
+        const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const qStories = query(collection(db, "stories"), where("createdAt", ">", dayAgo));
+        onSnapshot(qStories, (snap) => {
+            const container = document.getElementById('stories-container');
+            container.innerHTML = "";
+            snap.forEach(d => {
+                const s = d.data();
+                container.innerHTML += `<div class="story-bubble" title="${s.user}"><span>${s.user[0].toUpperCase()}</span></div>`;
+            });
+        });
+
+        // --- TEMPS RÉEL : CONTACTS ---
+        onSnapshot(collection(db, "users"), (snap) => {
+            const list = document.getElementById('users-list');
+            list.innerHTML = "";
+            snap.forEach(d => {
+                const u = d.data();
+                if(u.name === myName) return;
+                list.innerHTML += `<div class="contact-card"><div class="avatar-mini"></div><div><strong>${u.name}</strong><br><small>${u.online ? '🟢 En ligne' : '⚪ Hors-ligne'}</small></div></div>`;
+            });
+        });
+
+        // --- ACTIONS ---
+        const input = document.getElementById('msg-input');
+        async function send() {
+            if (input.value.trim() === "") return;
+            const text = input.value;
+            input.value = "";
+            await addDoc(collection(db, "messages"), { text, user: myName, createdAt: serverTimestamp() });
+            await setDoc(myUserRef, { streak: increment(1) }, { merge: true });
+        }
+        document.getElementById('send-trigger').onclick = send;
+        input.onkeypress = (e) => e.key === 'Enter' && send();
+
+        document.querySelector('.story-add').onclick = async () => {
+            const content = prompt("Ta story (texte) :");
+            if(content) await addDoc(collection(db, "stories"), { user: myName, content, createdAt: serverTimestamp() });
+        };
+
+        // --- NAVIGATION ---
+        window.switchTab = (tab, btn) => {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if(tab === 'chat') {
+                document.getElementById('feed').classList.remove('hidden');
+                document.getElementById('chat-controls').style.display = 'block';
+            } else {
+                document.getElementById('contacts-view').classList.remove('hidden');
+                document.getElementById('chat-controls').style.display = 'none';
+            }
+        };
+    </script>
 </body>
 </html>
