@@ -1,52 +1,40 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-const firebaseConfig = { /* TES INFOS FIREBASE */ };
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Gestion du pseudo
-let currentUser = localStorage.getItem('lerlarchat-user');
-if (!currentUser) {
-    currentUser = prompt("Bienvenue sur LerLarChat ! Ton pseudo :") || "Membre";
-    localStorage.setItem('lerlarchat-user', currentUser);
-}
-
-// Récupération des messages
-const feed = document.getElementById('feed');
-const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
-
-onSnapshot(q, (snapshot) => {
-    feed.innerHTML = "";
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        const card = document.createElement('div');
-        card.className = 'message-card';
-        card.innerHTML = `
-            <div class="avatar-mini"></div>
-            <div class="msg-content">
-                <h4>${data.user} <span style="font-weight:400; font-size:10px; color:#475569">à ${new Date(data.createdAt?.toDate()).toLocaleTimeString()}</span></h4>
-                <p>${data.text}</p>
-            </div>
-        `;
-        feed.appendChild(card);
-    });
-    feed.scrollTop = feed.scrollHeight;
-});
-
-// Envoi de message
+// Remplace ce fichier par ton app.js avec Firebase
 const input = document.getElementById('msg-input');
 const trigger = document.getElementById('send-trigger');
+const feed = document.getElementById('feed');
+const streakCount = document.getElementById('streak-count');
 
-async function send() {
-    if (input.value.trim() === "") return;
-    await addDoc(collection(db, "messages"), {
-        user: currentUser,
-        text: input.value,
-        createdAt: serverTimestamp()
-    });
+// Simulation de l'augmentation des flammes
+let currentStreak = parseInt(streakCount.innerText);
+
+function sendMessage() {
+    const text = input.value.trim();
+    if (text === "") return;
+
+    // Création de la bulle
+    const pill = document.createElement('div');
+    pill.className = 'msg-pill sent';
+    pill.innerHTML = `<p>${text}</p>`;
+    
+    feed.appendChild(pill);
     input.value = "";
+    
+    // Auto-scroll très fluide
+    feed.scrollTo({
+        top: feed.scrollHeight,
+        behavior: 'smooth'
+    });
+
+    // Gamification : Augmenter la flamme visuellement après l'envoi
+    currentStreak++;
+    streakCount.innerText = currentStreak;
+    streakCount.parentElement.style.transform = 'scale(1.2)';
+    setTimeout(() => {
+        streakCount.parentElement.style.transform = 'scale(1)';
+    }, 200);
 }
 
-trigger.addEventListener('click', send);
-input.addEventListener('keypress', (e) => e.key === 'Enter' && send());
+trigger.addEventListener('click', sendMessage);
+input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+});
