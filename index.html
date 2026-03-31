@@ -3,32 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LarLerChat | Messaging</title>
+    <title>LerLarChat | April 2026</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
-        <header class="app-header">
-            <div class="status-dot"></div>
-            <h1>LarLerCaht</h1>
-            <button id="theme-toggle">🌓</button>
-        </header>
+    <div id="app-shell">
+        <aside class="space-nav">
+            <div class="space-icon home active">LLC</div>
+            <div class="divider"></div>
+            <div class="space-icon">🎨</div>
+            <div class="space-icon">🎮</div>
+            <div class="space-icon plus">＋</div>
+        </aside>
 
-        <main id="chat-window">
-            <div class="date-separator">Aujourd'hui</div>
-            <div class="bubble received">
-                <span class="sender">LarLerBot</span>
-                <p>Bienvenue ! Ici, pas de serveurs compliqués, juste du code pur.</p>
+        <section class="channel-list">
+            <header class="community-header">
+                <h3>LerLarChat Hub</h3>
+            </header>
+            <div class="category">
+                <span>CANAUX TEXTUELS</span>
+                <div class="item active"># général</div>
+                <div class="item"># annonces</div>
+                <div class="item"># aide-opensource</div>
             </div>
+            <div class="category">
+                <span>MEMBRES</span>
+                <div id="user-list">
+                    </div>
+            </div>
+        </section>
+
+        <main class="main-chat">
+            <header class="chat-header">
+                <div class="header-info">
+                    <span class="hashtag">#</span>
+                    <h2>général</h2>
+                </div>
+                <div class="header-tools">
+                    <button id="search-btn">🔍</button>
+                    <button id="notif-btn">🔔</button>
+                </div>
+            </header>
+
+            <div id="feed" class="feed-container">
+                </div>
+
+            <footer class="composer">
+                <div class="input-card">
+                    <button class="attach-btn">＋</button>
+                    <input type="text" id="msg-input" placeholder="Envoyer dans #général...">
+                    <button id="send-trigger">⚡</button>
+                </div>
+            </footer>
         </main>
-
-        <footer class="input-area">
-            <div class="input-wrapper">
-                <input type="text" id="user-input" placeholder="Écris ici...">
-                <button id="send-btn">🚀</button>
-            </div>
-        </footer>
     </div>
-    <script src="script.js"></script>
+
+    <script type="module" src="app.js"></script>
 </body>
 </html>
