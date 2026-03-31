@@ -1,36 +1,32 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('chat-form');
-    const input = document.getElementById('msg-input');
-    const container = document.getElementById('messages-container');
+const chatWindow = document.getElementById('chat-window');
+const input = document.getElementById('user-input');
+const btn = document.getElementById('send-btn');
 
-    // Fonction pour ajouter un message à l'écran
-    const addMessage = (text, user = "Utilisateur") => {
-        const msgDiv = document.createElement('div');
-        msgDiv.classList.add('message');
-        msgDiv.innerHTML = `
-            <span class="user">${user}:</span>
-            <p>${text}</p>
-        `;
-        container.appendChild(msgDiv);
-        
-        // Scroll automatique vers le bas
-        container.scrollTop = container.scrollHeight;
-    };
+function sendMessage() {
+    if (input.value.trim() === "") return;
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const message = input.value.trim();
+    // Créer la bulle "Moi"
+    const msg = document.createElement('div');
+    msg.className = 'bubble sent';
+    msg.innerHTML = `<p>${input.value}</p>`;
+    
+    chatWindow.appendChild(msg);
+    
+    // Reset et scroll
+    input.value = "";
+    chatWindow.scrollTop = chatWindow.scrollHeight;
 
-        if (message !== "") {
-            addMessage(message, "Moi");
-            input.value = ""; // Vide le champ
-            
-            // Simulation d'une réponse auto (pour le test)
-            setTimeout(() => {
-                if(message.toLowerCase().includes("salut")) {
-                    addMessage("Salut ! Bienvenue sur LarLerCaht.", "Bot");
-                }
-            }, 500);
-        }
-    });
+    // Petite interaction auto
+    setTimeout(() => {
+        const reply = document.createElement('div');
+        reply.className = 'bubble received';
+        reply.innerHTML = `<span class="sender">LarLer</span><p>Message reçu sur LarLerCaht ! ✅</p>`;
+        chatWindow.appendChild(reply);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }, 1000);
+}
+
+btn.addEventListener('click', sendMessage);
+input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
 });
