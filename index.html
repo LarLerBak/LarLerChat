@@ -3,40 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LarLerCaht | Open Source Messaging</title>
+    <title>LarLerChat | Messaging</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="app">
-        <nav class="sidebar">
-            <div class="logo">LLC</div>
-            <div class="channels">
-                <button class="active"># général</button>
-                <button># développement</button>
-                <button># design</button>
-            </div>
-        </nav>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="status-dot"></div>
+            <h1>LarLerCaht</h1>
+            <button id="theme-toggle">🌓</button>
+        </header>
 
-        <main class="chat-area">
-            <header>
-                <h2># général</h2>
-            </header>
-            <div id="messages-container">
-                <div class="message">
-                    <span class="user">Système:</span>
-                    <p>Bienvenue sur LarLerCaht !</p>
-                </div>
+        <main id="chat-window">
+            <div class="date-separator">Aujourd'hui</div>
+            <div class="bubble received">
+                <span class="sender">LarLerBot</span>
+                <p>Bienvenue ! Ici, pas de serveurs compliqués, juste du code pur.</p>
             </div>
-            <form id="chat-form">
-                <input type="text" id="msg-input" placeholder="Envoyer un message..." autocomplete="off">
-                <button type="submit">Envoyer</button>
-            </form>
         </main>
 
-        <aside class="friends-list">
-            <h3>En ligne — 1</h3>
-            <div class="friend">Vous (Admin)</div>
-        </aside>
+        <footer class="input-area">
+            <div class="input-wrapper">
+                <input type="text" id="user-input" placeholder="Écris ici...">
+                <button id="send-btn">🚀</button>
+            </div>
+        </footer>
     </div>
     <script src="script.js"></script>
 </body>
