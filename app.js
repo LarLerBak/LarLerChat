@@ -1,10 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-    getFirestore, collection, addDoc, query, orderBy, onSnapshot, 
-    serverTimestamp, doc, setDoc, increment 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, increment, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// 1. CONFIGURATION FIREBASE (Remplace par tes clés depuis la console Firebase)
+// REMPLACE PAR TES CLÉS FIREBASE
 const firebaseConfig = {
     apiKey: "TON_API_KEY",
     authDomain: "lerlarchat.firebaseapp.com",
@@ -14,103 +12,113 @@ const firebaseConfig = {
     appId: "1:123456789:web:abcdef"
 };
 
-// Initialisation
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
-// 2. GESTION DE L'UTILISATEUR
-let currentUser = localStorage.getItem('lerlarchat-user');
-if (!currentUser) {
-    currentUser = prompt("Bienvenue sur LerLarChat ! Ton pseudo :") || "Anonyme";
-    localStorage.setItem('lerlarchat-user', currentUser);
-}
+// --- AUTH LOGIQUE ---
+window.showAuth = (type) => {
+    document.querySelectorAll('.auth-view').forEach(v => v.classList.add('hidden'));
+    document.querySelectorAll('.auth-tabs button').forEach(b => b.classList.remove('active'));
+    document.getElementById(`${type}-form`).classList.remove('hidden');
+    document.getElementById(`tab-${type}`).classList.add('active');
+};
 
-// Mise à jour de l'interface avec le pseudo
-document.getElementById('username-display').innerText = currentUser;
+document.getElementById('google-signin-btn').onclick = () => signInWithPopup(auth, provider);
 
-// Références Firestore
-const messagesCol = collection(db, "messages");
-const userDocRef = doc(db, "users", currentUser);
-
-// DOM Elements
-const feed = document.getElementById('feed');
-const input = document.getElementById('msg-input');
-const trigger = document.getElementById('send-trigger');
-const streakCount = document.getElementById('streak-count');
-
-// 3. ÉCOUTE DES FLAMMES EN TEMPS RÉEL (La Rétention)
-onSnapshot(userDocRef, (docSnap) => {
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        streakCount.innerText = data.streak || 0;
-        
-        // Petit effet visuel quand le score monte depuis la base de données
-        streakCount.parentElement.style.transform = 'scale(1.2)';
-        setTimeout(() => streakCount.parentElement.style.transform = 'scale(1)', 200);
-    } else {
-        // Initialiser le score à 0 si le joueur est nouveau
-        streakCount.innerText = 0;
-    }
-});
-
-// 4. RÉCEPTION DES MESSAGES
-const q = query(messagesCol, orderBy("createdAt", "asc"));
-
-onSnapshot(q, (snapshot) => {
-    feed.innerHTML = ""; // Vide le feed avant de le re-remplir
-    
-    snapshot.forEach((doc) => {
-        const data = doc.data();
-        const isMe = data.user === currentUser;
-        
-        const pill = document.createElement('div');
-        // Si c'est moi "sent", sinon "received"
-        pill.className = `msg-pill ${isMe ? 'sent' : 'received'}`; 
-        
-        // On affiche le nom de l'expéditeur seulement si ce n'est pas nous
-        const senderHtml = isMe ? '' : `<span class="sender">${data.user}</span>`;
-        
-        pill.innerHTML = `
-            ${senderHtml}
-            <p>${data.text}</p>
-        `;
-        feed.appendChild(pill);
-    });
-    
-    // Scroll tout en bas pour voir le dernier message
-    feed.scrollTop = feed.scrollHeight;
-});
-
-// 5. ENVOI DE MESSAGE ET AUGMENTATION DES FLAMMES
-async function sendMessage() {
-    const text = input.value.trim();
-    if (text === "") return;
-
-    // Vider l'input tout de suite pour la sensation de fluidité
-    input.value = "";
-
+document.getElementById('btn-signup-email').onclick = async () => {
+    const user = document.getElementById('signup-user').value;
+    const email = document.getElementById('signup-email').value;
+    const pass = document.getElementById('signup-password').value;
     try {
-        // A. Envoyer le message dans la base
-        await addDoc(messagesCol, {
-            text: text,
-            user: currentUser,
-            createdAt: serverTimestamp()
-        });
+        const res = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(res.user, { displayName: user });
+    } catch (e) { alert(e.message); }
+};
 
-        // B. Augmenter le Streak (les flammes) de 1 dans la base
-        // setDoc avec { merge: true } crée le document s'il n'existe pas, ou le met à jour
-        await setDoc(userDocRef, {
-            streak: increment(1),
-            lastActive: serverTimestamp()
-        }, { merge: true });
+document.getElementById('btn-login-email').onclick = async () => {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-password').value;
+    try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { alert(e.message); }
+};
 
-    } catch (error) {
-        console.error("Erreur lors de l'envoi :", error);
+document.getElementById('btn-logout').onclick = () => signOut(auth);
+
+// --- ÉTAT DE CONNEXION ---
+onAuthStateChanged(auth, (user) => {
+    const overlay = document.getElementById('auth-overlay');
+    const content = document.getElementById('app-content');
+    
+    if (user) {
+        overlay.classList.add('hidden');
+        content.classList.remove('hidden');
+        document.getElementById('username-display').innerText = user.displayName;
+        if(user.photoURL) {
+            document.getElementById('user-avatar').src = user.photoURL;
+            document.getElementById('user-avatar').style.display = 'block';
+            document.getElementById('avatar-placeholder').style.display = 'none';
+        }
+        initAppData(user);
+    } else {
+        overlay.classList.remove('hidden');
+        content.classList.add('hidden');
     }
+});
+
+// --- DATA TEMPS RÉEL ---
+function initAppData(user) {
+    const userRef = doc(db, "users", user.uid);
+    setDoc(userRef, { name: user.displayName, online: true, lastSeen: serverTimestamp() }, { merge: true });
+
+    // Messages
+    onSnapshot(query(collection(db, "messages"), orderBy("createdAt", "asc")), (snap) => {
+        const feed = document.getElementById('feed');
+        feed.innerHTML = "";
+        snap.forEach(d => {
+            const m = d.data();
+            const isMe = m.uid === user.uid;
+            const div = document.createElement('div');
+            div.className = `msg-pill ${isMe ? 'sent' : 'received'}`;
+            div.innerHTML = `${isMe ? '' : '<span class="sender">'+m.user+'</span>'}<p>${m.text}</p>`;
+            feed.appendChild(div);
+        });
+        feed.scrollTop = feed.scrollHeight;
+    });
+
+    // Flammes
+    onSnapshot(userRef, (d) => {
+        if(d.exists()) document.getElementById('streak-count').innerText = d.data().streak || 0;
+    });
+
+    // Contacts
+    onSnapshot(collection(db, "users"), (snap) => {
+        const list = document.getElementById('users-list');
+        list.innerHTML = "";
+        snap.forEach(d => {
+            const u = d.data();
+            if(d.id === user.uid) return;
+            list.innerHTML += `<div class="contact-card"><div class="avatar-mini"></div><div><strong>${u.name}</strong><br><small>${u.online ? '🟢 En ligne' : '⚪ Hors-ligne'}</small></div></div>`;
+        });
+    });
 }
 
-// 6. ÉVÉNEMENTS (Clic et Touche Entrée)
-trigger.addEventListener('click', sendMessage);
-input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
+// --- ACTIONS ---
+const input = document.getElementById('msg-input');
+async function send() {
+    if (!input.value.trim()) return;
+    const text = input.value;
+    input.value = "";
+    await addDoc(collection(db, "messages"), { text, user: auth.currentUser.displayName, uid: auth.currentUser.uid, createdAt: serverTimestamp() });
+    await setDoc(doc(db, "users", auth.currentUser.uid), { streak: increment(1) }, { merge: true });
+}
+document.getElementById('send-trigger').onclick = send;
+input.onkeypress = (e) => e.key === 'Enter' && send();
+
+window.switchTab = (tab, btn) => {
+    document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tab === 'chat' ? 'feed' : 'contacts-view').classList.remove('hidden');
+    document.getElementById('chat-controls').style.display = tab === 'chat' ? 'block' : 'none';
+};
