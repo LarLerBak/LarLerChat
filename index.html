@@ -2,63 +2,40 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LerLarChat | April 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LerLarChat | Immersive</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="app-shell">
-        <aside class="space-nav">
-            <div class="space-icon home active">LLC</div>
-            <div class="divider"></div>
-            <div class="space-icon">🎨</div>
-            <div class="space-icon">🎮</div>
-            <div class="space-icon plus">＋</div>
-        </aside>
-
-        <section class="channel-list">
-            <header class="community-header">
-                <h3>LerLarChat Hub</h3>
-            </header>
-            <div class="category">
-                <span>CANAUX TEXTUELS</span>
-                <div class="item active"># général</div>
-                <div class="item"># annonces</div>
-                <div class="item"># aide-opensource</div>
+    <div id="mobile-frame">
+        <header class="hud-top">
+            <div class="user-profile">
+                <div class="avatar"></div>
+                <span id="username-display">Moi</span>
             </div>
-            <div class="category">
-                <span>MEMBRES</span>
-                <div id="user-list">
-                    </div>
+            <div class="streak-badge">
+                <span class="fire-icon">🔥</span>
+                <span id="streak-count">12</span>
             </div>
-        </section>
+        </header>
 
-        <main class="main-chat">
-            <header class="chat-header">
-                <div class="header-info">
-                    <span class="hashtag">#</span>
-                    <h2>général</h2>
+        <main id="immersive-chat">
+            <div class="chat-feed" id="feed">
+                <div class="msg-pill received">
+                    <span class="sender">LerLarBot</span>
+                    <p>Swipe pour voir la magie ! ✨</p>
                 </div>
-                <div class="header-tools">
-                    <button id="search-btn">🔍</button>
-                    <button id="notif-btn">🔔</button>
-                </div>
-            </header>
-
-            <div id="feed" class="feed-container">
-                </div>
-
-            <footer class="composer">
-                <div class="input-card">
-                    <button class="attach-btn">＋</button>
-                    <input type="text" id="msg-input" placeholder="Envoyer dans #général...">
-                    <button id="send-trigger">⚡</button>
-                </div>
-            </footer>
+            </div>
         </main>
-    </div>
 
+        <footer class="hud-bottom">
+            <div class="composer-pill">
+                <button id="camera-btn">📸</button>
+                <input type="text" id="msg-input" placeholder="Envoyer un chat..." autocomplete="off">
+                <button id="send-trigger">🚀</button>
+            </div>
+        </footer>
+    </div>
     <script type="module" src="app.js"></script>
 </body>
 </html>
