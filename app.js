@@ -1,32 +1,52 @@
-const chatWindow = document.getElementById('chat-window');
-const input = document.getElementById('user-input');
-const btn = document.getElementById('send-btn');
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-function sendMessage() {
-    if (input.value.trim() === "") return;
+const firebaseConfig = { /* TES INFOS FIREBASE */ };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    // Créer la bulle "Moi"
-    const msg = document.createElement('div');
-    msg.className = 'bubble sent';
-    msg.innerHTML = `<p>${input.value}</p>`;
-    
-    chatWindow.appendChild(msg);
-    
-    // Reset et scroll
-    input.value = "";
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-
-    // Petite interaction auto
-    setTimeout(() => {
-        const reply = document.createElement('div');
-        reply.className = 'bubble received';
-        reply.innerHTML = `<span class="sender">LarLer</span><p>Message reçu sur LarLerCaht ! ✅</p>`;
-        chatWindow.appendChild(reply);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }, 1000);
+// Gestion du pseudo
+let currentUser = localStorage.getItem('lerlarchat-user');
+if (!currentUser) {
+    currentUser = prompt("Bienvenue sur LerLarChat ! Ton pseudo :") || "Membre";
+    localStorage.setItem('lerlarchat-user', currentUser);
 }
 
-btn.addEventListener('click', sendMessage);
-input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
+// Récupération des messages
+const feed = document.getElementById('feed');
+const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+
+onSnapshot(q, (snapshot) => {
+    feed.innerHTML = "";
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const card = document.createElement('div');
+        card.className = 'message-card';
+        card.innerHTML = `
+            <div class="avatar-mini"></div>
+            <div class="msg-content">
+                <h4>${data.user} <span style="font-weight:400; font-size:10px; color:#475569">à ${new Date(data.createdAt?.toDate()).toLocaleTimeString()}</span></h4>
+                <p>${data.text}</p>
+            </div>
+        `;
+        feed.appendChild(card);
+    });
+    feed.scrollTop = feed.scrollHeight;
 });
+
+// Envoi de message
+const input = document.getElementById('msg-input');
+const trigger = document.getElementById('send-trigger');
+
+async function send() {
+    if (input.value.trim() === "") return;
+    await addDoc(collection(db, "messages"), {
+        user: currentUser,
+        text: input.value,
+        createdAt: serverTimestamp()
+    });
+    input.value = "";
+}
+
+trigger.addEventListener('click', send);
+input.addEventListener('keypress', (e) => e.key === 'Enter' && send());
